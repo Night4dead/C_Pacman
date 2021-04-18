@@ -101,15 +101,66 @@ void test_debug(int *a,const char *argv){
     }
 }
 
+void cleanBuffer(int *nb,char s[]){
+    if(*nb > 0 ){
+        s[*nb]=0;
+        *nb=0;
+    }
+}
+
+void initGrid(struct Grid* grid, char *buf, int *h, int *w, int n, int m){
+    (*grid).ghosts = malloc(sizeof(int*)*n);
+    for(int i=0;i<n;i++){
+        (*grid).ghosts[i]= malloc(sizeof(int)*2);
+    }
+
+    (*grid).points = malloc(sizeof(int*)*m);
+    for (int i=0; i<m;i++){
+        (*grid).points[i] = malloc(sizeof(int)*2);
+    }
+
+    (*grid).player = malloc(sizeof(int*));
+    for (int i = 0; i < 2; ++i) {
+        (*grid).player[i]= malloc(sizeof(int)*2);
+    }
+
+    (*grid).grid = malloc(sizeof(int*)*(*h));
+    for (int i = 0; i < *h; ++i) {
+        (*grid).grid = malloc(sizeof(int)*(*w));
+    }
+}
+
+void move(){
+    //to implement
+}
+
+void computerMove(){
+    //to implement
+}
+
 //main
 int main(int argc, char const *argv[]){
     //variables
+
+    //Grid;
+    struct Grid grid;
+
+    //sockets
     int fdSocketServer;
     int fdSocketClient;
     struct sockaddr_in adServer;
     struct sockaddr_in adClient;
+
+    //commands for moving pacman
     char buffer[MAX_BUFFER];
+
+    //var for gamemode choice
+
+
+    //var for size of grid
+    int size[2];
     int nbReceived;
+    int num_client=1;
     int debug=0;
     int nb_listen;
     int lenAd;
@@ -157,19 +208,33 @@ int main(int argc, char const *argv[]){
         fdSocketClient = acceptConnection(fdSocketServer,(struct sockaddr*)&adClient,&lenAd);
 
         int pid = fork();
+        num_client++;
         if(pid==0){
-            printf("Client connecté !");
-
+            printf("Client n*%d connecté ! at : %s",num_client,inet_ntoa(adClient.sin_addr));
+            int iter=0;
             while(testExit(buffer)!=-1){
-
+                nbReceived = recv(fdSocketClient,buffer,MAX_BUFFER,0);
+                if(nbReceived<0&&debug==1){
+                    printf("Erreur de réception\n");
+                } else {
+                    cleanBuffer(&nbReceived,buffer);
+                    if (iter==0){
+                        initGrid(&grid,buffer,&size[1],&size[0],2,20);
+                    }else {
+                        move();
+                        computerMove();
+                        //to complete
+                    }
+                }
+                iter++;
             }
-
+            close(fdSocketClient);
             exit(EXIT_SUCCESS);
         }
     }
 
     close(fdSocketServer);
-    close(fdSocketClient);
+
 
     return 0;
 }
