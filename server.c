@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 
 #define PORT 6000
@@ -28,15 +29,31 @@ struct Grid {
 
 //functions
 
-void erreur(const char *message) {
-    printf("Erreur durant : %s\n", message);
-    exit(EXIT_FAILURE);
-}
 
 
 int testExit(char buffer[]){
     return strcmp(buffer,EXIT)==0;
 }
+
+
+void print_help(){
+    printf("\n"
+           " usage : ./server nb_clients [OPTIONS]\n"
+           " Lance le serveur sur le port 6000 a l'adresse IP 0.0.0.0, pour le nombre de clients autorisés (nb_clients) \n"
+           "\noptions : \n"
+           "    -d,  --debug    Affiche les positions non-valides trouvés aléatoirement par les fantomes,\n"
+           "                    ainsi que les grilles après chaque coup de l'ordinateur\n"
+           "    --help          affiche la page d'aide\n");
+}
+
+
+void erreur(const char *message) {
+    printf("Erreur durant : %s\n", message);
+    print_help();
+    exit(EXIT_FAILURE);
+}
+
+
 
 int createServerSocket(){
     int serverSocket;
@@ -78,6 +95,12 @@ int acceptConnection(int server, struct sockaddr* adCl, int *len){
     return client;
 }
 
+void test_debug(int *a,const char *argv){
+    if(strcmp(argv,"-d")==0|| strcmp(argv,"--debug")==0){
+        *a=1;
+    }
+}
+
 //main
 int main(int argc, char const *argv[]){
     //variables
@@ -87,12 +110,31 @@ int main(int argc, char const *argv[]){
     struct sockaddr_in adClient;
     char buffer[MAX_BUFFER];
     int nbReceived;
+    int debug=0;
     int nb_listen;
     int lenAd;
 
     //var initialisation
+    //test argc/argv:
 
+    if(argc<2){
+        erreur("init, nombre de variables insuffisants");
+        exit(EXIT_FAILURE);
+    }
 
+    if(strcmp(argv[1],"--help")==0){
+        print_help();
+        exit(EXIT_SUCCESS);
+    }
+
+    if((nb_listen=atoi(argv[1]))==0){
+        erreur("init, premier argument n'est pas le nombre de clients autorisés");
+        exit(EXIT_FAILURE);
+    }
+
+    if(argc>2){
+        test_debug(&debug,argv[2]);
+    }
 
     //server setup
 
@@ -109,6 +151,8 @@ int main(int argc, char const *argv[]){
 
     listenServer(fdSocketServer,nb_listen);
 
+    printf("Serveur démarré, ip : %s, listening\n", inet_ntoa(adServer.sin_addr));
+
     while(1){
         fdSocketClient = acceptConnection(fdSocketServer,(struct sockaddr*)&adClient,&lenAd);
 
@@ -119,6 +163,8 @@ int main(int argc, char const *argv[]){
             while(testExit(buffer)!=-1){
 
             }
+
+            exit(EXIT_SUCCESS);
         }
     }
 
