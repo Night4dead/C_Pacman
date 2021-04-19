@@ -214,6 +214,7 @@ int main(int argc, char const *argv[]){
             int iter=0;
             while(testExit(buffer)!=-1){
                 nbReceived = recv(fdSocketClient,buffer,MAX_BUFFER,0);
+                //add test for start of game
                 if(nbReceived<0&&debug==1){
                     printf("Erreur de réception\n");
                 } else {

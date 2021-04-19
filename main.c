@@ -26,5 +26,6 @@ int main (int argc, char const *argv[]) {
     printf(ANSI_COLOR_MAGENTA "This text is MAGENTA!" ANSI_COLOR_RESET "\n");
     printf(ANSI_COLOR_CYAN    "This text is CYAN!"    ANSI_COLOR_RESET "\n");
     print_help();
+    //colors
     return 0;
 }
