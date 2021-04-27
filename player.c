@@ -175,37 +175,52 @@ void doMove(int serv,char* buf){
             printf(" déplacement invalide\n");
         }
     }
-    printf("\ntest done\n");
 }
 
 void displayGridStr(char* buf, int tour){
     printf("\nTour du joueur: %d   ",tour);
-    for (int i = 0; i < strlen(buf); ++i) {
-        switch (buf[i]) {
-            case '0':
-                printf("   |");
-                break;
-            case '3':
-                printf(ANSI_COLOR_YELLOW" %c" ANSI_COLOR_RESET " |",'C');
-                break;
-            case '4':
-                printf(ANSI_COLOR_RED" %c" ANSI_COLOR_RESET " |",'A');
-                break;
-            case '2':
-                printf(" %c |",'@');
-                break;
-            case '1':
-                printf(" %c |",'*');
-                break;
-            case '|':
-                printf("\n|");
-                break;
-            default:
-                printf("%c",buf[i]);
-                break;
+    int grid=0;
+    for (int i = 1; i < strlen(buf); ++i) {
+        if(buf[i]=='|'){
+            grid=1;
         }
+        if(grid==1){
+            switch (buf[i]) {
+                case '0':
+                    printf("   |");
+                    break;
+                case '3':
+                    printf(ANSI_COLOR_YELLOW" %c" ANSI_COLOR_RESET " |",'C');
+                    break;
+                case '4':
+                    printf(ANSI_COLOR_RED" %c" ANSI_COLOR_RESET " |",'A');
+                    break;
+                case '2':
+                    printf(" %c |",'@');
+                    break;
+                case '1':
+                    printf(" %c |",'*');
+                    break;
+                case '|':
+                    printf("\n|");
+                    break;
+                default:
+                    printf("%c",buf[i]);
+                    break;
+            }
+        } else {
+            printf("%c",buf[i]);
+        }
+
     }
     printf("\n");
+}
+
+void gameLost(char *buf){
+    printf("\n");
+    for (int i = 0; i < strlen(buf); ++i) {
+        printf("%c",buf[i]);
+    }
 }
 
 int main(){
@@ -246,8 +261,14 @@ int main(){
                 exit(EXIT_FAILURE);
             }
             cleanBuffer(&nbReceived,gridstr);
-            displayGridStr(gridstr,iter);
-            doMove(fdSocketClient,move);
+            if(gridstr[0]!='0'){
+                gameLost(gridstr);
+                sendServ(fdSocketClient,EXIT);
+                exit(EXIT_FAILURE);
+            } else{
+                displayGridStr(gridstr,iter);
+                doMove(fdSocketClient,move);
+            }
         }
         iter++;
     }
