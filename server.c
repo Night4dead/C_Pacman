@@ -183,121 +183,56 @@ int getGhostTest(int** ghosts, int* nb_ghosts, int player_x, int player_y, int s
     return 0;
 }
 
-void move(char* buf, struct Grid* grid,int client){
 
+void doMove(struct Grid* grid,int prev_posx, int prev_posy, int posx, int posy){
+    if(allowedMove(posy,(*grid).grid_height)==1 && allowedMove(posx,(*grid).grid_width)){
+        if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),posx,posy,(*grid).score)==0){
+            (*grid).grid[posy][posx]=3;
+        }
+        if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),prev_posx,prev_posy,(*grid).score)==0){
+            (*grid).grid[prev_posy][prev_posx]=0;
+        }
+        if(getPointTest((*grid).points,&((*grid).nb_points),posx,posy)==1){
+            if((*grid).grid[posy][posx]==2){
+                (*grid).score+=200;
+            } else{
+                (*grid).score+=100;
+            }
+            (*grid).player[0]=posx;
+            (*grid).player[1]=posy;
+        }
+    }
+    if(DEBUG==1){
+        printf("destination non valide!\n");
+    }
+}
+
+
+void readMove(char* buf, struct Grid* grid,int client){
     if (strcmp(buf,"forw")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-
-        if(allowedMove((*grid).player[1]-1,(*grid).grid_height)==1){
-            (*grid).player[1]-=1;
-
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]]=3;
-            }
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1]+1,(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]+1][(*grid).player[0]]=0;
-            }
-            if(getPointTest((*grid).points,&((*grid).nb_points),(*grid).player[0],(*grid).player[1])==1){
-                if((*grid).grid[(*grid).player[1]][(*grid).player[0]]==2){
-                    (*grid).score+=200;
-                } else{
-                    (*grid).score+=100;
-                }
-            }
-        }
-
-        else if(DEBUG==1){
-            printf("destination non valide!\n");
-        }
+        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]-1);
     }
-
-    else if(strcmp(buf,"back")==0) {
+    if (strcmp(buf,"back")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-
-        if(allowedMove((*grid).player[1]+1,(*grid).grid_height)==1){
-            (*grid).player[1]+=1;
-
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]]=3;
-            }
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1]-1,(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]-1][(*grid).player[0]]=0;
-            }
-
-            if(getPointTest((*grid).points,&((*grid).nb_points),(*grid).player[0],(*grid).player[1])==1){
-                if((*grid).grid[(*grid).player[1]][(*grid).player[0]]==2){
-                    (*grid).score+=200;
-                } else{
-                    (*grid).score+=100;
-                }
-            }
-        }
-
-        else if(DEBUG==1){
-            printf("destination non valide!\n");
-        }
+        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]+1);
     }
-
-    else if(strcmp(buf,"left")==0) {
+    if (strcmp(buf,"left")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-
-        if(allowedMove((*grid).player[0]-1,(*grid).grid_width)==1){
-            (*grid).player[0]-=1;
-
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]]=3;
-            }
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0]+1,(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]+1]=0;
-            }
-            if(getPointTest((*grid).points,&((*grid).nb_points),(*grid).player[0],(*grid).player[1])==1){
-                if((*grid).grid[(*grid).player[1]][(*grid).player[0]]==2){
-                    (*grid).score+=200;
-                } else{
-                    (*grid).score+=100;
-                }
-            }
-        }
-
-        else if(DEBUG==1){
-            printf("destination non valide!\n");
-        }
+        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]-1,(*grid).player[1]);
     }
-
-    else if(strcmp(buf,"rght")==0) {
+    if (strcmp(buf,"rght")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-
-        if(allowedMove((*grid).player[0]+1,(*grid).grid_width)==1){
-            (*grid).player[0]+=1;
-
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0],(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]]=3;
-            }
-            if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),(*grid).player[0]-1,(*grid).player[1],(*grid).score)==0){
-                (*grid).grid[(*grid).player[1]][(*grid).player[0]-1]=0;
-            }
-            if(getPointTest((*grid).points,&((*grid).nb_points),(*grid).player[0],(*grid).player[1])==1) {
-                if((*grid).grid[(*grid).player[1]][(*grid).player[0]]==2){
-                    (*grid).score+=200;
-                } else{
-                    (*grid).score+=100;
-                }
-            }
-        }
-
-        else if(DEBUG==1){
-            printf("destination non valide!\n");
-        }
+        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]+1,(*grid).player[1]);
     }
-
     else if(testExit(buf)==1){
         printf("Le client %d a quitté\n",client);
         exit(EXIT_SUCCESS);
@@ -416,7 +351,6 @@ void genGrid(struct Grid *grid){
     }
 
     //placing elements in the main grid;
-
     //points;
     for (int i = 0; i < (*grid).nb_points; i++) {
         (*grid).grid[(*grid).points[i][1]][(*grid).points[i][0]]=(i%2==0? 1 : (i%3==0 ? 2 : 1));
@@ -582,7 +516,7 @@ int main(int argc, char const *argv[]){
                         printf("Erreur de réception\n");
                     } else {
                         cleanBuffer(&nbReceived,buffer);
-                        move(buffer,&grid,num_client);
+                        readMove(buffer,&grid,num_client);
                         if(DEBUG==1){
                             printf("\nClient n*%d",num_client);
                             display(grid);
