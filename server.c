@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 #define SM_GRID_WIDTH 10
 #define SM_GRID_HEIGHT 6
@@ -74,6 +75,22 @@ void print_help(){
 void erreur(const char *message) {
     printf("Erreur durant : %s\n", message);
     exit(EXIT_FAILURE);
+}
+
+
+void gameOver(int score){
+    char temp[150];
+    strcpy(temp,LOSE_GAME);
+    strcat(temp," Score final : ");
+    char temp_score[10];
+    sprintf(temp_score,"%d",score);
+    strcat(temp,temp_score);
+    int losenotif = send(CLIENT,temp, strlen(temp),0);
+    if(losenotif<0){
+        printf("Erreur d'envois\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("Client n*%d a perdu\n",NUM_CLIENT);
 }
 
 
@@ -164,43 +181,32 @@ int getPointTest(int** points, int* nb_points, int player_x, int player_y){
 int getGhostTest(int** ghosts, int* nb_ghosts, int player_x, int player_y, int score){
     for (int i = 0; i < *nb_ghosts; ++i) {
         if(ghosts[i][0]==player_x && ghosts[i][1]==player_y){
-            char temp[150];
-            strcpy(temp,LOSE_GAME);
-            strcat(temp," Score final : ");
-            char temp_score[10];
-            sprintf(temp_score,"%d",score);
-            strcat(temp,temp_score);
-            int losenotif = send(CLIENT,temp, strlen(temp),0);
-            if(losenotif<0){
-                printf("Erreur d'envois\n");
-                exit(EXIT_FAILURE);
-            }
-            printf("Client n*%d a perdu\n",NUM_CLIENT);
+            gameOver(score);
             return 1;
-
         }
     }
     return 0;
 }
 
 
-void doMove(struct Grid* grid,int prev_posx, int prev_posy, int posx, int posy){
+int doMove(struct Grid* grid,int prev_posx, int prev_posy, int posx, int posy){
     if(allowedMove(posy,(*grid).grid_height)==1 && allowedMove(posx,(*grid).grid_width)){
         if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),posx,posy,(*grid).score)==0){
             (*grid).grid[posy][posx]=3;
+        } else {
+            return 1;
         }
-        if(getGhostTest((*grid).ghosts,&((*grid).nb_ghosts),prev_posx,prev_posy,(*grid).score)==0){
-            (*grid).grid[prev_posy][prev_posx]=0;
-        }
+        (*grid).grid[prev_posy][prev_posx]=0;
         if(getPointTest((*grid).points,&((*grid).nb_points),posx,posy)==1){
             if((*grid).grid[posy][posx]==2){
                 (*grid).score+=200;
             } else{
                 (*grid).score+=100;
             }
-            (*grid).player[0]=posx;
-            (*grid).player[1]=posy;
         }
+        (*grid).player[0]=posx;
+        (*grid).player[1]=posy;
+        return 0;
     }
     if(DEBUG==1){
         printf("destination non valide!\n");
@@ -208,39 +214,40 @@ void doMove(struct Grid* grid,int prev_posx, int prev_posy, int posx, int posy){
 }
 
 
-void readMove(char* buf, struct Grid* grid,int client){
+int readMove(char* buf, struct Grid* grid){
     if (strcmp(buf,"forw")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]-1);
+        return doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]-1);
     }
     if (strcmp(buf,"back")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]+1);
+        return doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0],(*grid).player[1]+1);
     }
     if (strcmp(buf,"left")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]-1,(*grid).player[1]);
+        return doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]-1,(*grid).player[1]);
     }
     if (strcmp(buf,"rght")==0){
         if(DEBUG==1){
             printf("%s\n",buf);
         }
-        doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]+1,(*grid).player[1]);
+        return doMove(grid,(*grid).player[0],(*grid).player[1],(*grid).player[0]+1,(*grid).player[1]);
     }
     else if(testExit(buf)==1){
-        printf("Le client %d a quitté\n",client);
+        printf("\nLe client %d a quitté ",NUM_CLIENT);
         exit(EXIT_SUCCESS);
     }
 }
 
 void computerMove(){
     //to implement
+
 }
 
 
@@ -392,11 +399,87 @@ void display(struct Grid grid){
 }
 //end grid handling
 
+void initGame(struct Grid * grid, char* gridtostr){
+    char buffer[MAX_BUFFER];
+    int nbReceived = recv(CLIENT,buffer,MAX_BUFFER,0);
+    if(nbReceived<0){
+        printf("Erreur de réception\n");
+    } else {
+        cleanBuffer(&nbReceived,buffer);
+        if(DEBUG==1){
+            printf("Client n*%d : %s\n",NUM_CLIENT,buffer);
+        }
+        initSize(buffer,grid);
+        nbReceived = recv(CLIENT,buffer,MAX_BUFFER,0);
+        if(nbReceived<0){
+            printf("Erreur de réception\n");
+        }
+        if(DEBUG==1){
+            printf("Client n*%d : %s\n",NUM_CLIENT,buffer);
+        }
+        (*grid).nb_ghosts = atoi(buffer);
+        genGrid(grid);
+        if(DEBUG==1){
+            printf("\nClient n*%d",NUM_CLIENT);
+            display(*grid);
+        }
+        gridtostr = malloc(sizeof(char)*((*grid).grid_width+1)*(*grid).grid_height);
+        toStringGrid(*grid,gridtostr);
+        int grid_send = send(CLIENT,gridtostr, (long)strlen(gridtostr),0);
+        if(grid_send<0){
+            printf("Erreur d'envois\n");
+            exit(EXIT_FAILURE);
+        }
+        strcpy(gridtostr,"");
+    }
+}
+
+int game(struct Grid *grid, char *gridtostr){
+
+    printf("\n%s\n",gridtostr);
+    int res;
+    printf("\ntest\n");
+    char buffer[MAX_BUFFER];
+    printf("\ntest\n");
+    int nbReceived= recv(CLIENT,buffer,4,0);
+    printf("\ntest\n");
+    if(nbReceived<0){
+        printf("Erreur de réception\n");
+    } else {
+        printf("\ntest\n");
+        cleanBuffer(&nbReceived,buffer);
+        printf("\ntest\n");
+        if(DEBUG==1){
+            printf("\nClient n*%d : buffer = %s",NUM_CLIENT,buffer);
+        }
+        res = readMove(buffer,grid);
+        printf("\ntest\n");
+        if(DEBUG==1){
+            printf("\nClient n*%d",NUM_CLIENT);
+            display(*grid);
+        }
+        /*computerMove();
+        if(DEBUG==1){
+            printf("\nClient n*%d",num_client);
+            display(grid);
+        }*/
+        printf("\ntest\n");
+        toStringGrid(*grid,gridtostr);
+        int grid_send = send(CLIENT,gridtostr, (long)strlen(gridtostr),0);
+        if(grid_send<0){
+            printf("Erreur d'envois\n");
+            exit(EXIT_FAILURE);
+        }
+        return res;
+    }
+}
+
+
 
 //main
 int main(int argc, char const *argv[]){
     //variables
-
+    srand(time(NULL));
     //Grid;
     struct Grid grid;
 
@@ -477,68 +560,21 @@ int main(int argc, char const *argv[]){
             }
 
             //start of config for game
+            int gamelose=0;
             while(testExit(buffer)!=1){
-                if(iter>=0 && iter<2){
-                    nbReceived = recv(fdSocketClient,buffer,MAX_BUFFER,0);
-                    if(nbReceived<0){
-                        printf("Erreur de réception\n");
-                    } else {
-                        cleanBuffer(&nbReceived,buffer);
-                        if (iter==0){
-                            if(DEBUG==1){
-                                printf("Client n*%d : %s\n",num_client,buffer);
-                            }
-                            initSize(buffer,&grid);
-                        } else if(iter==1) {
-                            if(DEBUG==1){
-                                printf("Client n*%d : %s\n",num_client,buffer);
-                            }
-                            grid.nb_ghosts = atoi(buffer);
-                            genGrid(&grid);
-                            if(DEBUG==1){
-                                printf("\nClient n*%d",num_client);
-                                display(grid);
-
-                            }
-                            gridtostr = malloc(sizeof(char)*(grid.grid_width+1)*grid.grid_height);
-                            toStringGrid(grid,gridtostr);
-                            grid_send = send(fdSocketClient,gridtostr, (long)strlen(gridtostr),0);
-                            if(grid_send<0){
-                                printf("Erreur d'envois\n");
-                                exit(EXIT_FAILURE);
-                            }
-                            strcpy(gridtostr,"");
-                        }
-                    }
+                if(iter==0){
+                    initGame(&grid,gridtostr);
+                    printf("\ntest out of init %s\n",gridtostr);
                 } else {
-                    nbReceived= recv(fdSocketClient,buffer,MAX_BUFFER,0);
-                    if(nbReceived<0){
-                        printf("Erreur de réception\n");
-                    } else {
-                        cleanBuffer(&nbReceived,buffer);
-                        readMove(buffer,&grid,num_client);
-                        if(DEBUG==1){
-                            printf("\nClient n*%d",num_client);
-                            display(grid);
-
-                        }
-                        /*computerMove();
-                        if(DEBUG==1){
-                            printf("\nClient n*%d",num_client);
-                            display(grid);
-                        }*/
-                        toStringGrid(grid,gridtostr);
-                        grid_send = send(fdSocketClient,gridtostr, (long)strlen(gridtostr),0);
-                        if(grid_send<0){
-                            printf("Erreur d'envois\n");
-                            exit(EXIT_FAILURE);
-                        }
-                        strcpy(gridtostr,"");
-                    }
+                    printf("\ntest before game\n");
+                    gamelose = game(&grid,gridtostr);
                 }
+                if(gamelose==1){
+                    //restart game
+                }
+                printf("\ntest before strcpy\n");
 
                 //add test for start of game
-
                 iter++;
             }
             close(fdSocketClient);
