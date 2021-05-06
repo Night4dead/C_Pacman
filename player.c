@@ -221,6 +221,7 @@ int main(){
             printf("message server : %s\n",buffer);
             initGameSettings(fdSocketClient);
         } else {
+
             nbReceived= recv(fdSocketClient,gridstr,MAX_BUFFER,0);
             if(nbReceived<0){
                 printf("Erreur de réception\n");
@@ -232,6 +233,7 @@ int main(){
                 strcpy(buffer,"");
                 strcpy(gridstr,"");
             } else{
+                system("clear");
                 displayGridStr(gridstr,iter);
                 doMove(fdSocketClient);
             }
