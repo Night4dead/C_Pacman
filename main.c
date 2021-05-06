@@ -1,30 +1,19 @@
+#include <string.h>
 #include <stdio.h>
 
+#define MAX_BUFFER 1000
 
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
-void print_help(){
-    printf(" server : arguments manquants ou erreur d'arguments\n"
-           " usage : ./server nb_clients [OPTIONS]\n"
-           " Lance le serveur sur le port 6000 a l'adresse IP 0.0.0.0, pour le nombre de clients autorisés (nb_clients) \n"
-           "options : \n"
-           "    -d,  --debug    Affiche les positions non-valides trouvés aléatoirement par les fantomes, ainsi que les grilles après chaque coup de l'ordinateur\n");
+void lireMessager(char buffer[],char text[]){
+    printf("%s",text);
+    fgets(buffer,4,stdin);
+    strtok(buffer,"\n");
 }
 
-int main (int argc, char const *argv[]) {
-
-    printf(ANSI_COLOR_RED     "This text is RED!"     ANSI_COLOR_RESET "\n");
-    printf(ANSI_COLOR_GREEN   "This text is GREEN!"   ANSI_COLOR_RESET "\n");
-    printf(ANSI_COLOR_YELLOW  "This text is YELLOW!"  ANSI_COLOR_RESET "\n");
-    printf(ANSI_COLOR_BLUE    "This text is BLUE!"    ANSI_COLOR_RESET "\n");
-    printf(ANSI_COLOR_MAGENTA "This text is MAGENTA!" ANSI_COLOR_RESET "\n");
-    printf(ANSI_COLOR_CYAN    "This text is CYAN!"    ANSI_COLOR_RESET "\n");
-    print_help();
+int main(){
+    char play[4];
+    lireMessager(play,"enter non ");
+    printf("\n%s\n",play);
+    int res = strcmp(play,"oui");
+    printf("%d",res);
     return 0;
 }
