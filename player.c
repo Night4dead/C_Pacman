@@ -34,36 +34,7 @@
 
 const char *EXIT = "exit";
 int NB_GHOSTS;
-int GRID_WIDTH;
-int GRID_HEIGHT;
-int score;
 
-void display(int** grid){
-    printf("\nTour du joueur : %d\t\t", 0);
-    printf("Score : %d\n", 0);
-    for(int i=0;i<GRID_HEIGHT; i++) {
-        for(int j=0;j<GRID_WIDTH;j++){
-            switch (grid[i][j]) {
-                case 0:
-                    printf("   |");
-                    break;
-                case 3:
-                    printf(ANSI_COLOR_YELLOW" %c" ANSI_COLOR_RESET " |",'C');
-                    break;
-                case 4:
-                    printf(ANSI_COLOR_RED" %c" ANSI_COLOR_RESET " |",'A');
-                    break;
-                case 2:
-                    printf(" %c |",'@');
-                    break;
-                case 1:
-                    printf(" %c |",'*');
-                    break;
-            }
-        }
-        printf("\n");
-    }
-}
 
 void cleanBuffer(int *nb,char s[]){
     if(*nb > 0 ){
@@ -84,40 +55,29 @@ void lireMessager(char buffer[],char text[]){
 
 
 void initSize(char* size){
-    char* sm_grid = "sm";
-    char* md_grid = "md";
-    char* lg_grid = "lg";
+    char* sm_grid = "1";
+    char* md_grid = "2";
+    char* lg_grid = "3";
     int valid_input=0;
     while(valid_input==0){
-        lireMessager(size,"Veuillez choisir une taille ('sm': petite, 'md': moyenne, 'lg': grande) :");
+        lireMessager(size,"Veuillez choisir une difficulté ("ANSI_COLOR_GREEN"'1': facile"ANSI_COLOR_RESET", "ANSI_COLOR_CYAN"'2': normale"ANSI_COLOR_RESET", "ANSI_COLOR_MAGENTA"'3': difficile"ANSI_COLOR_RESET") :");
         if(strcmp(sm_grid, size) == 0){
             valid_input = 1;
-            GRID_HEIGHT=SM_GRID_HEIGHT;
-            GRID_WIDTH=SM_GRID_WIDTH;
+            NB_GHOSTS=2;
+            strcpy(size,"sm");
         }
         else if(strcmp(md_grid, size) == 0){
             valid_input = 1;
-            GRID_HEIGHT=MD_GRID_HEIGHT;
-            GRID_WIDTH=MD_GRID_WIDTH;
+            NB_GHOSTS=4;
+            strcpy(size,"md");
         }
         else if(strcmp(lg_grid, size) == 0){
             valid_input = 1;
-            GRID_HEIGHT=LG_GRID_HEIGHT;
-            GRID_WIDTH=LG_GRID_WIDTH;
+            NB_GHOSTS=6;
+            strcpy(size,"lg");
         }
         else{
             printf("Choix impossible, veuillez recommencer svp\n");
-        }
-    }
-}
-
-void initGhosts(char* nb_ghosts){
-    int valid_input =0;
-    while(valid_input==0){
-        lireMessager(nb_ghosts,"Veuillez entrer un nombre de fantomes (entre 2 et 6) : ");
-        if(atoi(nb_ghosts)>=2 && atoi(nb_ghosts)<=6){
-            valid_input=1;
-            NB_GHOSTS= atoi(nb_ghosts);
         }
     }
 }
@@ -137,21 +97,14 @@ void initGameSettings(int serv){
     char nb_ghosts[TAILLE];
     initSize(sizeGrid);
     sendServ(serv,sizeGrid);
-    initGhosts(nb_ghosts);
-    sendServ(serv,nb_ghosts);
+    sprintf(nb_ghosts,"%d",NB_GHOSTS);
 }
 
-void initGrid(int **grid){
-    grid= malloc(sizeof(int*)*GRID_HEIGHT);
-    for (int i = 0; i < GRID_HEIGHT; ++i) {
-        grid[i]= malloc(sizeof(int)*GRID_WIDTH);
-    }
-}
-
-void doMove(int serv,char* buf){
+void doMove(int serv){
+    char buf[10];
     int valid=0;
     while(valid==0){
-        lireMessager(buf,"Effectuez un déplacement valide (z/w | q/a | s | d | exit) : ");
+        lireMessager(buf,"Effectuez un déplacement valide (z/w | q/a | s | d |"ANSI_COLOR_MAGENTA" exit"ANSI_COLOR_RESET") : ");
         if(strcmp(buf,"w")==0|| strcmp(buf,"z")==0){
             sendServ(serv,"forw");
             valid=1;
@@ -175,14 +128,22 @@ void doMove(int serv,char* buf){
             printf(" déplacement invalide\n");
         }
     }
+    strcpy(buf,"");
 }
 
 void displayGridStr(char* buf, int tour){
-    printf("\nTour du joueur: %d   ",tour);
     int grid=0;
-    for (int i = 1; i < strlen(buf); ++i) {
+    int i=0;
+    if(buf[0]=='0'){
+        i=1;
+        printf("\nTour du joueur: %d   ",tour);
+    }
+    for (i; i < strlen(buf); ++i) {
         if(buf[i]=='|'){
             grid=1;
+        }
+        if(buf[i]=='\n'){
+            grid=0;
         }
         if(grid==1){
             switch (buf[i]) {
@@ -216,17 +177,25 @@ void displayGridStr(char* buf, int tour){
     printf("\n");
 }
 
-void gameLost(char *buf){
-    printf("\n");
-    for (int i = 0; i < strlen(buf); ++i) {
-        printf("%c",buf[i]);
+int gameEnd(char *buf, int client){
+    char play[4];
+    displayGridStr(buf,-1);
+    do{
+        strcpy(play,"");
+        lireMessager(play,"\nVoulez-vous refaire une partie ? ("ANSI_COLOR_GREEN"oui"ANSI_COLOR_RESET" | "ANSI_COLOR_RED"non"ANSI_COLOR_RESET") ");
+    }while(strcmp(play,"oui")==1 && strcmp(play,"non")==1);
+    if(strcmp(play,"non")==0){
+        sendServ(client,EXIT);
+        exit(EXIT_FAILURE);
     }
+    sendServ(client,"replay");
+    return 0;
 }
+
 
 int main(){
     char buffer[MAX_BUFFER];
-    char move[10];
-    char* gridstr;
+    char gridstr[MAX_BUFFER];
     int** grid;
     struct sockaddr_in adServer;
     int nbReceived;
@@ -251,9 +220,6 @@ int main(){
             cleanBuffer(&nbReceived,buffer);
             printf("message server : %s\n",buffer);
             initGameSettings(fdSocketClient);
-            initGrid(grid);
-            gridstr = malloc(sizeof(char)*GRID_HEIGHT*GRID_WIDTH);
-            score = 0;
         } else {
             nbReceived= recv(fdSocketClient,gridstr,MAX_BUFFER,0);
             if(nbReceived<0){
@@ -262,17 +228,16 @@ int main(){
             }
             cleanBuffer(&nbReceived,gridstr);
             if(gridstr[0]!='0'){
-                gameLost(gridstr);
-                sendServ(fdSocketClient,EXIT);
-                exit(EXIT_FAILURE);
+                iter = gameEnd(gridstr, fdSocketClient)-1;
+                strcpy(buffer,"");
+                strcpy(gridstr,"");
             } else{
                 displayGridStr(gridstr,iter);
-                doMove(fdSocketClient,move);
+                doMove(fdSocketClient);
             }
         }
         iter++;
     }
     close(fdSocketClient);
-
     return 0;
 }
