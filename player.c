@@ -34,6 +34,7 @@
 
 const char *EXIT = "exit";
 int NB_GHOSTS;
+int grid_width;
 
 
 void cleanBuffer(int *nb,char s[]){
@@ -64,16 +65,19 @@ void initSize(char* size){
         if(strcmp(sm_grid, size) == 0){
             valid_input = 1;
             NB_GHOSTS=2;
+            grid_width=SM_GRID_WIDTH;
             strcpy(size,"sm");
         }
         else if(strcmp(md_grid, size) == 0){
             valid_input = 1;
             NB_GHOSTS=4;
+            grid_width=MD_GRID_WIDTH;
             strcpy(size,"md");
         }
         else if(strcmp(lg_grid, size) == 0){
             valid_input = 1;
             NB_GHOSTS=6;
+            grid_width=LG_GRID_WIDTH;
             strcpy(size,"lg");
         }
         else{
@@ -132,6 +136,7 @@ void doMove(int serv){
 }
 
 void displayGridStr(char* buf, int tour){
+    system("clear");
     int grid=0;
     int i=0;
     if(buf[0]=='0'){
@@ -139,38 +144,55 @@ void displayGridStr(char* buf, int tour){
         printf("\nTour du joueur: %d   ",tour);
     }
     for (i; i < strlen(buf); ++i) {
-        if(buf[i]=='|'){
+        if(buf[i]=='|' && grid==0){
+            printf("\n");
+            for (int j = 0; j < grid_width; ++j) {
+                printf("###");
+            }
+            printf("#");
             grid=1;
         }
         if(buf[i]=='\n'){
             grid=0;
         }
+        if(buf[i]=='&'){
+            printf("#\n");
+            for (int j = 0; j < grid_width; ++j) {
+                printf("###");
+            }
+            printf("#");
+            grid=0;
+        }
         if(grid==1){
             switch (buf[i]) {
                 case '0':
-                    printf("   |");
+                    printf("   ");
                     break;
                 case '3':
-                    printf(ANSI_COLOR_YELLOW" %c" ANSI_COLOR_RESET " |",'C');
+                    printf(ANSI_COLOR_YELLOW" %c" ANSI_COLOR_RESET " ",'C');
                     break;
                 case '4':
-                    printf(ANSI_COLOR_RED" %c" ANSI_COLOR_RESET " |",'A');
+                    printf(ANSI_COLOR_RED" %c" ANSI_COLOR_RESET " ",'A');
                     break;
                 case '2':
-                    printf(" %c |",'@');
+                    printf(" %c ",'@');
                     break;
                 case '1':
-                    printf(" %c |",'*');
+                    printf(" %c ",'*');
                     break;
                 case '|':
-                    printf("\n|");
+                    printf("#\n#");
                     break;
                 default:
                     printf("%c",buf[i]);
                     break;
             }
-        } else {
-            printf("%c",buf[i]);
+        } else{
+            if(buf[i]=='&'){
+                printf("#");
+            } else {
+                printf("%c",buf[i]);
+            }
         }
 
     }
@@ -179,16 +201,21 @@ void displayGridStr(char* buf, int tour){
 
 int gameEnd(char *buf, int client){
     char play[4];
+    int valid=0;
     displayGridStr(buf,-1);
     do{
         strcpy(play,"");
         lireMessager(play,"\nVoulez-vous refaire une partie ? ("ANSI_COLOR_GREEN"oui"ANSI_COLOR_RESET" | "ANSI_COLOR_RED"non"ANSI_COLOR_RESET") ");
-    }while(strcmp(play,"oui")==1 && strcmp(play,"non")==1);
-    if(strcmp(play,"non")==0){
-        sendServ(client,EXIT);
-        exit(EXIT_FAILURE);
-    }
-    sendServ(client,"replay");
+        if(strcmp(play,"non")==0){
+            sendServ(client,EXIT);
+            valid=1;
+            exit(EXIT_FAILURE);
+        }
+        else if(strcmp(play,"oui")==0){
+            sendServ(client,"replay");
+            valid=1;
+        }
+    }while(valid==0);
     return 0;
 }
 
@@ -196,7 +223,6 @@ int gameEnd(char *buf, int client){
 int main(){
     char buffer[MAX_BUFFER];
     char gridstr[MAX_BUFFER];
-    int** grid;
     struct sockaddr_in adServer;
     int nbReceived;
     int fdSocketClient= socket(PF_INET,SOCK_STREAM,0);
@@ -233,7 +259,7 @@ int main(){
                 strcpy(buffer,"");
                 strcpy(gridstr,"");
             } else{
-                system("clear");
+
                 displayGridStr(gridstr,iter);
                 doMove(fdSocketClient);
             }

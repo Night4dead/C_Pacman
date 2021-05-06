@@ -90,7 +90,6 @@ void erreur(const char *message) {
 
 void gameTime(char * buffer){
     char temp_time[3];
-    printf("\ntest\n");
     int seconds_from_start;
     time_t now = time(NULL);
     seconds_from_start=now-START;
@@ -129,26 +128,33 @@ void toStringGrid(struct Grid grid,char *buffer){
             strcat(buffer,"|");
         }
     }
+    strcat(buffer,"&");
 }
 
 void calcBonus(int score, char * buffer){
-    char temp[4];
-    sprintf(buffer,"%d",score+(timer.minutes*100)+(timer.seconds*10));
+    char tempbonus[4];
+    sprintf(tempbonus,"%d",score+(timer.minutes*1000)+(timer.seconds*10));
+    strcat(buffer,tempbonus);
     strcat(buffer," ( ");
-    sprintf(temp,"%d",score);
-    strcat(buffer,temp);
+    sprintf(tempbonus,"%d",score);
+    strcat(buffer,tempbonus);
     strcat(buffer," + time bonus : ");
-    sprintf(temp,"%d",(timer.minutes*100)+(timer.seconds*10));
-    strcat(buffer,temp);
+    sprintf(tempbonus,"%d",(timer.minutes*1000)+(timer.seconds*10));
+    strcat(buffer,tempbonus);
     strcat(buffer," )\n");
 }
 
 
-void gameEnd(const char * buf, int score){
-    char temp[MAX_BUFFER],temp_score[20];
-    strcpy(temp,buf);
-    strcat(temp,"\n Score final : ");
-    calcBonus(score,temp_score);
+void gameEnd(const char * buf, int score, int nb_points){
+    char res[MAX_BUFFER],temp_score[20],temp[MAX_BUFFER];
+    strcpy(res,buf);
+    strcat(res,"\n Score final : ");
+    strcpy(temp,res);
+    if(score>0 && nb_points==0){
+        calcBonus(score,temp_score);
+    } else{
+        sprintf(temp_score," %d",score);
+    }
     strcat(temp,temp_score);
     int losenotif = send(CLIENT,temp, strlen(temp),0);
     if(losenotif<0){
@@ -161,12 +167,12 @@ void end(struct Grid grid, const char* endres){
     char temp[MAX_BUFFER], str[MAX_BUFFER];
     toStringGrid(grid,str);
     memmove(str,str+1, strlen(str));
-    strcat(temp,"\n");
+    strcat(temp,"\n  ");
     strcat(temp,endres);
     strcat(temp,"  \n Tour final");
     strcat(temp,str);
     strcat(temp,"\n    ");
-    gameEnd(temp,grid.score);
+    gameEnd(temp,grid.score,grid.nb_points);
     strcpy(temp,"");
     strcpy(str,"");
 }
