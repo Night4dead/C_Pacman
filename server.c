@@ -562,9 +562,20 @@ void sendGrid(struct Grid grid){
 }
 //end grid handling
 
+void sendScoreboard(){
+    char score[MAX_BUFFER];
+    //read the file
+    send(CLIENT,score,sizeof(score),0);
+}
+
+
+
+
+
 struct Grid initGame(){
     struct Grid grid;
     char buffer[MAX_BUFFER];
+    gameGreeting();
     int nbReceived = recv(CLIENT,buffer,MAX_BUFFER,0);
     if(nbReceived<0){
         printf("Erreur de réception\n");
@@ -573,7 +584,12 @@ struct Grid initGame(){
         if(DEBUG==1){
             printf("Client n*%d : %s\n",NUM_CLIENT,buffer);
         }
-        grid=initSize(buffer);
+        if(strcmp(buffer,"score")) {
+            sendScoreboard();
+            grid = initGame();
+        } else {
+            grid=initSize(buffer);
+        }
         strcpy(buffer,"");
         if(DEBUG==1){
             printf("\nClient n*%d",NUM_CLIENT);
@@ -651,7 +667,7 @@ void initApp(int argc,const char**argv,int* nb_listen){
 struct Grid gameSetup(){
     struct Grid grid;
     START=time(NULL);
-    gameGreeting();
+    //gameGreeting();
     grid = initGame();
     sendGrid(grid);
     return grid;
