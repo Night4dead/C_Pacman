@@ -64,9 +64,6 @@ struct Timer {
 struct Timer timer;
 
 //functions
-
-
-
 int testExit(char buffer[]){
     return strcmp(buffer,EXIT)==0;
 }
