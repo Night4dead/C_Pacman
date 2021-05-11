@@ -219,53 +219,66 @@ int gameEnd(char *buf, int client){
     return 0;
 }
 
-
-int main(){
+int gameInit(int socket,int *receive){
     char buffer[MAX_BUFFER];
-    char gridstr[MAX_BUFFER];
+    *receive=recv(socket,buffer,MAX_BUFFER,0);
+    if(*receive<0){
+        printf("Erreur de réception\n");
+        exit(EXIT_FAILURE);
+    }
+    cleanBuffer(receive,buffer);
+    printf("message server : %s\n",buffer);
+    initGameSettings(socket);
+    return 0;
+}
+
+void game(int socket, int *receive, int* iter){
+    char grid[MAX_BUFFER];
+    *receive= recv(socket,grid,MAX_BUFFER,0);
+    if(*receive<0){
+        printf("Erreur de réception\n");
+        exit(EXIT_FAILURE);
+    }
+    cleanBuffer(receive,grid);
+    if(grid[0]!='0'){
+        *iter = gameEnd(grid, socket)-1;
+        strcpy(grid,"");
+    } else{
+        displayGridStr(grid,*iter);
+        doMove(socket);
+    }
+}
+
+void gameLoop(int socket){
+    int iter=0;
+    int nbReceived, start_game;
+    while(1){
+        if(iter==0){
+            start_game = gameInit(socket,&nbReceived);
+        } else {
+            game(socket, &nbReceived,&iter);
+        }
+        if(start_game==0) iter++;
+    }
+}
+
+
+void connectServ(int socket, char* ad){
     struct sockaddr_in adServer;
-    int nbReceived;
-    int fdSocketClient= socket(PF_INET,SOCK_STREAM,0);
     adServer.sin_family=PF_INET;
-    inet_aton("0.0.0.0",&adServer.sin_addr);
+    inet_aton(ad,&(adServer.sin_addr));
     adServer.sin_port= htons(PORT);
-    if(connect(fdSocketClient,(struct sockaddr*)&adServer,sizeof(adServer))==-1){
+    if(connect(socket,(struct sockaddr*)&adServer,sizeof(adServer))==-1){
         printf("Erreur de connect \n");
         exit(EXIT_FAILURE);
     }
-
     printf("Connexion ok !\n");
-    int iter=0;
-    while(testExit(buffer)!=1){
-        if(iter==0){
-            nbReceived=recv(fdSocketClient,buffer,MAX_BUFFER,0);
-            if(nbReceived<0){
-                printf("Erreur de réception\n");
-                exit(EXIT_FAILURE);
-            }
-            cleanBuffer(&nbReceived,buffer);
-            printf("message server : %s\n",buffer);
-            initGameSettings(fdSocketClient);
-        } else {
+}
 
-            nbReceived= recv(fdSocketClient,gridstr,MAX_BUFFER,0);
-            if(nbReceived<0){
-                printf("Erreur de réception\n");
-                exit(EXIT_FAILURE);
-            }
-            cleanBuffer(&nbReceived,gridstr);
-            if(gridstr[0]!='0'){
-                iter = gameEnd(gridstr, fdSocketClient)-1;
-                strcpy(buffer,"");
-                strcpy(gridstr,"");
-            } else{
-
-                displayGridStr(gridstr,iter);
-                doMove(fdSocketClient);
-            }
-        }
-        iter++;
-    }
+int main(){
+    int fdSocketClient= socket(PF_INET,SOCK_STREAM,0);
+    connectServ(fdSocketClient,"0.0.0.0");
+    gameLoop(fdSocketClient);
     close(fdSocketClient);
     return 0;
 }

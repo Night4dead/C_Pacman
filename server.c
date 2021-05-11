@@ -89,7 +89,6 @@ void erreur(const char *message) {
 }
 
 void gameTime(char * buffer){
-    char temp_time[3];
     int seconds_from_start;
     time_t now = time(NULL);
     seconds_from_start=now-START;
@@ -99,22 +98,15 @@ void gameTime(char * buffer){
         timer.seconds=60+timer.seconds;
         timer.minutes-=1;
     }
-    sprintf(temp_time,"%02d",timer.minutes);
-    strcat(buffer,temp_time);
-    strcat(buffer,":");
-    sprintf(temp_time,"%02d",timer.seconds);
-    strcat(buffer,temp_time);
+    sprintf(buffer," %02d:%02d",timer.minutes,timer.seconds);
 
 }
 
 void toStringGrid(struct Grid grid,char *buffer){
     strcpy(buffer,"");
-    char temp_score[10],temp_time[5];
+    char temp_time[5];
     strcpy(temp_time,"");
-    strcat(buffer,"0 Score : ");
-    sprintf(temp_score,"%d",grid.score);
-    strcat(buffer, temp_score);
-    strcat(buffer,"  Timer : ");
+    sprintf(buffer,"0 Score : %d  Timer : ",grid.score);
     gameTime(temp_time);
     strcat(buffer,temp_time);
     strcat(buffer,"  |");
@@ -132,16 +124,7 @@ void toStringGrid(struct Grid grid,char *buffer){
 }
 
 void calcBonus(int score, char * buffer){
-    char tempbonus[4];
-    sprintf(tempbonus,"%d",score+(timer.minutes*1000)+(timer.seconds*10));
-    strcat(buffer,tempbonus);
-    strcat(buffer," ( ");
-    sprintf(tempbonus,"%d",score);
-    strcat(buffer,tempbonus);
-    strcat(buffer," + time bonus : ");
-    sprintf(tempbonus,"%d",(timer.minutes*1000)+(timer.seconds*10));
-    strcat(buffer,tempbonus);
-    strcat(buffer," )\n");
+    sprintf(buffer,"%d ( %d + time bonus : %d)\n",score+(timer.minutes*1000)+(timer.seconds*10),score,(timer.minutes*1000)+(timer.seconds*10));
 }
 
 
