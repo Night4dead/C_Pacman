@@ -147,20 +147,20 @@ void displayGridStr(char* buf, int tour){
         if(buf[i]=='|' && grid==0){
             printf("\n");
             for (int j = 0; j < grid_width; ++j) {
-                printf("###");
+                printf(ANSI_COLOR_BLUE"###"ANSI_COLOR_RESET);
             }
-            printf("#");
+            printf(ANSI_COLOR_BLUE"#"ANSI_COLOR_RESET);
             grid=1;
         }
         if(buf[i]=='\n'){
             grid=0;
         }
         if(buf[i]=='&'){
-            printf("#\n");
+            printf(ANSI_COLOR_BLUE"#\n"ANSI_COLOR_RESET);
             for (int j = 0; j < grid_width; ++j) {
-                printf("###");
+                printf(ANSI_COLOR_BLUE"###"ANSI_COLOR_RESET);
             }
-            printf("#");
+            printf(ANSI_COLOR_BLUE"#"ANSI_COLOR_RESET);
             grid=0;
         }
         if(grid==1){
@@ -181,7 +181,7 @@ void displayGridStr(char* buf, int tour){
                     printf(" %c ",'*');
                     break;
                 case '|':
-                    printf("#\n#");
+                    printf(ANSI_COLOR_BLUE"#\n#"ANSI_COLOR_RESET);
                     break;
                 default:
                     printf("%c",buf[i]);
@@ -189,7 +189,7 @@ void displayGridStr(char* buf, int tour){
             }
         } else{
             if(buf[i]=='&'){
-                printf("#");
+                printf(ANSI_COLOR_BLUE"#"ANSI_COLOR_RESET);
             } else {
                 printf("%c",buf[i]);
             }
@@ -212,6 +212,7 @@ int gameEnd(char *buf, int client){
             exit(EXIT_FAILURE);
         }
         else if(strcmp(play,"oui")==0){
+            system("clear");
             sendServ(client,"replay");
             valid=1;
         }
@@ -247,11 +248,11 @@ int gameMenu(int socket){
     int valid =1,res;
     do {
         lireMessager(rep,"Voulez vous voir le scoreboard ? ("ANSI_COLOR_GREEN"oui"ANSI_COLOR_RESET" | "ANSI_COLOR_RED"non"ANSI_COLOR_RESET")");
-        if(strcmp(rep,"oui")){
-            valid =0;
+        if(strcmp(rep,"oui")==0){
+            valid=0;
             res=1;
             scoreboard(socket);
-        } else if(strcmp(rep,"non")){
+        } else if(strcmp(rep,"non")==0){
             valid=0;
             res=0;
         }
