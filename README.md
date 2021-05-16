@@ -9,7 +9,9 @@ and `gcc player.c -o player` to compile the player client.
 
 
 ##the clients
+
 ###server
+
 The server has to be running first (on local), you launch it by typing `./server N` 
 in a terminal, with `N` being the number of clients able to connect at once.
 you can use the `--debug` or `-d` to have the server display all the moves being made by the player
@@ -20,6 +22,7 @@ or just `./server` (this command has to at least have the number
 of client or it defaults to an error and displays the help).
 
 ###player
+
 the player has to be run in a different terminal than the server. Just do `./player`,
 this program doesn't have any option.
 
