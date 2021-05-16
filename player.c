@@ -98,10 +98,8 @@ int sendServ(int serv, char* buffer){
 
 void initGameSettings(int serv){
     char sizeGrid[TAILLE];
-    char nb_ghosts[TAILLE];
     initSize(sizeGrid);
     sendServ(serv,sizeGrid);
-    sprintf(nb_ghosts,"%d",NB_GHOSTS);
 }
 
 void doMove(int serv){
@@ -220,49 +218,10 @@ int gameEnd(char *buf, int client){
     return 0;
 }
 
-void dispScore(char* score){
-    for (int i = 0; i < strlen(score); ++i) {
-        if(score[i]=='|'){
-            printf("\n        ");
-        } else {
-            printf("%c",score[i]);
-        }
-    }
-    printf("\n  |fin scoreboard| \n\n");
-}
-
-void scoreboard(int socket){
-    int receive;
-    char scoreboard[MAX_BUFFER];
-    sendServ(socket,"score");
-    receive = recv(socket,scoreboard,MAX_BUFFER,0);
-    if(receive<0){
-        printf("Erreur de réception\n");
-        exit(EXIT_FAILURE);
-    }
-    dispScore(scoreboard);
-}
-
-int gameMenu(int socket){
-    char rep[MAX_BUFFER];
-    int valid =1,res;
-    do {
-        lireMessager(rep,"Voulez vous voir le scoreboard ? ("ANSI_COLOR_GREEN"oui"ANSI_COLOR_RESET" | "ANSI_COLOR_RED"non"ANSI_COLOR_RESET")");
-        if(strcmp(rep,"oui")==0){
-            valid=0;
-            res=1;
-            scoreboard(socket);
-        } else if(strcmp(rep,"non")==0){
-            valid=0;
-            res=0;
-        }
-    } while (valid!=0);
-    return res;
-}
 
 int gameInit(int socket,int *receive){
     char buffer[MAX_BUFFER];
-    int res;
+    int res=0;
     *receive=recv(socket,buffer,MAX_BUFFER,0);
     if(*receive<0){
         printf("Erreur de réception\n");
@@ -270,10 +229,7 @@ int gameInit(int socket,int *receive){
     }
     cleanBuffer(receive,buffer);
     printf("message server : %s\n",buffer);
-    res = gameMenu(socket);
-    if(res==0){
-        initGameSettings(socket);
-    }
+    initGameSettings(socket);
     return res;
 }
 

@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
-#include <fcntl.h>
 //define
 #define SM_GRID_WIDTH 10
 #define SM_GRID_HEIGHT 6
@@ -61,20 +60,6 @@ struct Timer {
     int seconds;
 };
 struct Timer timer;
-struct ScoreLine{
-    char name[5];
-    int score;
-    struct Timer time;
-};
-struct ScoreBoard{
-    struct ScoreLine* sl;
-    int sl_size;
-};
-
-
-struct ScoreBoard scoreboard1;
-struct ScoreBoard scoreboard2;
-struct ScoreBoard scoreboard3;
 //end structs
 
 //helpers
@@ -553,47 +538,6 @@ struct Grid initSize(char* buf){
     }
     return grid;
 }
-void readFile(char* file,char*buffer){
-    FILE* filestream;
-    char temp[BUFSIZ],*tempLine;
-
-    size_t len;
-    ssize_t read;
-    filestream = fopen(file,"r");
-    if(filestream==NULL){
-        exit(EXIT_FAILURE);
-    }
-    while((read = getline(&temp,&len,filestream))!=-1){
-        while((tempLine = strtok(temp,"|"))!=NULL){
-
-        }
-    }
-}
-void sendScoreboard(){
-    char score[MAX_BUFFER],filename[15], temp[MAX_BUFFER];
-    if(GAME_MODE!=0){
-        sprintf(filename,"scoreboard%d",GAME_MODE);
-        sprintf(score,"scoreboard niveau %d :\n",GAME_MODE);
-        readFile(filename,score);
-        strcat(score,"\n          |fin scoreboard|   \n\n");
-    } else {
-        for (int i = 0; i < 3; ++i) {
-            sprintf(filename,"scoreboard%d",i+1);
-            readFile(filename,temp);
-            sprintf(score,"scoreboard niveau %d :\n",i);
-            strcat(score,temp);
-            strcat(score,"\n      |fin scoreboard|\n\n\n");
-            strcpy(temp,"");
-        }
-    }
-    //read the file
-    //strcpy(score,"test scoreboard test scoreboard\n     first score \n     second score\n end of score\n");
-    if(DEBUG==1){
-        printf("\n%s\n",score);
-    }
-    send(CLIENT,score,sizeof(score),0);
-    strcpy(score,"");
-}
 void gameGreeting(){
     int msg = send(CLIENT, WELCOME, strlen(WELCOME), 0);
     if (msg < 0) {
@@ -604,8 +548,6 @@ void gameGreeting(){
 struct Grid initGame(){
     struct Grid grid;
     char buffer[MAX_BUFFER];
-    gameGreeting();
-    //printf("\ntest\n");
     int nbReceived = recv(CLIENT,buffer,MAX_BUFFER,0);
     if(nbReceived<0){
         printf("Erreur de réception\n");
@@ -614,13 +556,7 @@ struct Grid initGame(){
         if(DEBUG==1){
             printf("Client n*%d : %s\n",NUM_CLIENT,buffer);
         }
-        if(strcmp(buffer,"score")==0) {
-            sendScoreboard();
-            strcpy(buffer,"");
-            grid = initGame();
-        } else {
-            grid=initSize(buffer);
-        }
+        grid=initSize(buffer);
         strcpy(buffer,"");
         if(DEBUG==1){
             printf("\nClient n*%d",NUM_CLIENT);
@@ -631,7 +567,7 @@ struct Grid initGame(){
 }
 struct Grid gameSetup(){
     struct Grid grid;
-    //gameGreeting();
+    gameGreeting();
     grid = initGame();
     START=time(NULL);
     sendGrid(grid);

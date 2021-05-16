@@ -27,10 +27,7 @@ this program doesn't have any option.
 
 ###init of the player
 
-When launching the game you'll be asked if you want to view the scoreboard or not,
-if you do answer yes, you will be displayed the 5 top scores of each game mode.
-
-If you answered no, you'll be prompted to select the game mode, there are three : 
+When launching the game you'll be prompted to select the game mode, there are three : 
 
 `1`: easy ------> grid has a size of 10x6, and there are 2 ghosts chasing you, and a total of 30 points to collect.
 
@@ -58,8 +55,6 @@ If you get eaten by a ghosts before collecting all the points, you lose the game
 
 If you finish the game before the end of the timer, you get a time bonus depending on how much time you have left on the timer.
 
-<br>
-At the end of a game, you'll be asked whether to save your score or not, if you want to save it you'll be prompted to enter a 5-letter name.
 
 # made by Night4dead / Quentin KACZMAREK
 
