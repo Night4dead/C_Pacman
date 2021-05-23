@@ -94,11 +94,15 @@ void clearPointers(struct Grid * grid){
     }
     free((*grid).grid);
 }
-void cleanBuffer(int *nb,char s[]){
+void cleanBuffer(int *nb,char* s){
     if(*nb > 0 ){
         s[*nb]=0;
         *nb=0;
     }
+}
+
+void cleanStr(char* buf){
+    buf[0]='\0';
 }
 //end helpers
 
@@ -201,21 +205,26 @@ void calcBonus(int score, char * buffer){
     sprintf(buffer,"%d ( %d + time bonus : %d)\n",score+(timer.minutes*1000)+(timer.seconds*10),score,(timer.minutes*1000)+(timer.seconds*10));
 }
 void gameEnd(const char * buf, int score, int nb_points){
-    char res[MAX_BUFFER],temp_score[20],temp[MAX_BUFFER];
-    strcpy(res,buf);
-    strcat(res,"\n Score final : ");
-    strcpy(temp,res);
+    char temp_score[20],str[500],final[500];
+    //printf("\n values before clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
+    cleanStr(temp_score);
+    cleanStr(final);
+    cleanStr(str);
+    //printf("\n values after clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
     if(score>0 && nb_points==0){
         calcBonus(score,temp_score);
     } else{
         sprintf(temp_score," %d",score);
     }
-    strcat(temp,temp_score);
-    int losenotif = send(CLIENT,temp, strlen(temp),0);
+    strcpy(final,buf);
+    strcat(final,"\n Score final : ");
+    strcat(final,temp_score);
+    int losenotif = send(CLIENT,final, strlen(final),0);
     if(losenotif<0){
         printf("Erreur d'envois\n");
         exit(EXIT_FAILURE);
     }
+
 }
 void end(struct Grid grid, const char* endres){
     char temp[MAX_BUFFER], str[MAX_BUFFER];
@@ -227,8 +236,8 @@ void end(struct Grid grid, const char* endres){
     strcat(temp,str);
     strcat(temp,"\n    ");
     gameEnd(temp,grid.score,grid.nb_points);
-    strcpy(temp,"");
-    strcpy(str,"");
+    cleanStr(temp);
+    cleanStr(str);
 }
 void gameWin(struct Grid grid){
     end(grid,WIN_GAME);
@@ -274,6 +283,7 @@ void getPointTest(int ** grid,int** points, int* nb_points, int player_x, int pl
             }
             deleteArrayElement(points, nb_points, i);
             break;
+
         }
     }
 }
@@ -378,7 +388,8 @@ int computerMove(struct Grid *grid){
     int res, test_dir,test_ai;
     for (int i = 0; i < (*grid).nb_ghosts; ++i) {
         test_ai = rand()%3;
-        if(test_ai==0){
+        //TO-DO REMOVE 5 AND PUT BACK 0
+        if(test_ai==5){
             res= doAICompMove(grid,i);
         } else {
             test_dir=rand()%4;

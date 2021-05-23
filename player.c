@@ -87,7 +87,7 @@ void initSize(char* size){
 }
 
 
-int sendServ(int serv, char* buffer){
+int sendServ(int serv,const char* buffer){
     int msg=send(serv,buffer, strlen(buffer),0);
     if(msg<0){
         printf("Erreur d'envois\n");
@@ -201,8 +201,9 @@ int gameEnd(char *buf, int client){
     char play[4];
     int valid=0;
     displayGridStr(buf,-1);
+    buf[0]='\0';
     do{
-        strcpy(play,"");
+        play[0]='\0';
         lireMessager(play,"\nVoulez-vous refaire une partie ? ("ANSI_COLOR_GREEN"oui"ANSI_COLOR_RESET" | "ANSI_COLOR_RED"non"ANSI_COLOR_RESET") ");
         if(strcmp(play,"non")==0){
             sendServ(client,EXIT);
@@ -247,6 +248,7 @@ void game(int socket, int *receive, int* iter){
     } else{
         displayGridStr(grid,*iter);
         doMove(socket);
+        strcpy(grid,"");
     }
 }
 
