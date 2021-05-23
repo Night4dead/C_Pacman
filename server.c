@@ -206,11 +206,15 @@ void calcBonus(int score, char * buffer){
 }
 void gameEnd(const char * buf, int score, int nb_points){
     char temp_score[20],str[500],final[500];
-    //printf("\n values before clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
+    if(DEBUG==1){
+        printf("\n values before clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
+    }
     cleanStr(temp_score);
     cleanStr(final);
     cleanStr(str);
-    //printf("\n values after clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
+    if(DEBUG==1){
+        printf("\n values after clean : \n temp_score : %s \n str : %s \n final : %s\n",temp_score,str,final);
+    }
     if(score>0 && nb_points==0){
         calcBonus(score,temp_score);
     } else{
@@ -228,6 +232,8 @@ void gameEnd(const char * buf, int score, int nb_points){
 }
 void end(struct Grid grid, const char* endres){
     char temp[MAX_BUFFER], str[MAX_BUFFER];
+    cleanStr(temp);
+    cleanStr(str);
     toStringGrid(grid,str);
     memmove(str,str+1, strlen(str));
     strcat(temp,"\n  ");
@@ -388,8 +394,7 @@ int computerMove(struct Grid *grid){
     int res, test_dir,test_ai;
     for (int i = 0; i < (*grid).nb_ghosts; ++i) {
         test_ai = rand()%3;
-        //TO-DO REMOVE 5 AND PUT BACK 0
-        if(test_ai==5){
+        if(test_ai==0){
             res= doAICompMove(grid,i);
         } else {
             test_dir=rand()%4;
